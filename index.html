@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Simulatore Acquisto Personalizzato</title>
+  <title>Simulatore Acquisto Guidato</title>
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -87,13 +87,214 @@
       color: #555;
       margin-top: .4rem;
     }
-  </style>
+  
+    .pillbox{
+      display:flex; gap:.5rem; flex-wrap:wrap;
+      background:#f3f4f6; padding:.35rem; border-radius:999px; width:fit-content;
+      border:1px solid #e5e7eb;
+    }
+    .pillbox input{ display:none; }
+    .pill{
+      padding:.45rem .75rem; border-radius:999px; cursor:pointer;
+      font-size:.85rem; user-select:none;
+      border:1px solid transparent;
+    }
+    .pillbox input:checked + .pill{
+      background:white; border-color:#d1d5db; box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    }
+    .callout{
+      border-radius:12px; padding:.9rem 1rem; border:1px solid #e5e7eb;
+      background:#f8fafc; font-size:.9rem;
+    }
+    .callout > strong{ display:block; margin-bottom:.25rem; }
+    .callout ul{ margin:.35rem 0 0; padding-left:1.1rem; }
+    .muted{ color:#6b7280; }
+    .kpi{
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.8rem;
+      margin-top:.8rem;
+    }
+    .kpi .card{
+      background:white; border:1px solid #e5e7eb; border-radius:14px; padding:.85rem 1rem;
+      box-shadow:0 6px 18px rgba(0,0,0,0.05);
+    }
+    .kpi .label{ font-size:.8rem; color:#6b7280; }
+    .kpi .value{ font-size:1.05rem; font-weight:700; margin-top:.15rem; }
+    .kpi .sub{ font-size:.8rem; color:#6b7280; margin-top:.25rem; }
+    .hide{ display:none !important; }
+
+    .kpi .value.kpi-hero{
+      font-size:1.35rem;
+      font-weight:800;
+      letter-spacing:-0.01em;
+    }
+    .kpi .sub.kpi-sub{
+      font-size:.85rem;
+    }
+
+    /* Fix contrasto KPI dentro il box risultati scuro */
+    #kpiBox, #kpiBox .card{
+      color:#0f172a; /* testo scuro */
+    }
+    #kpiBox .label, #kpiBox .sub{
+      color:#334155;
+    }
+
+
+    /* KPI specifiche */
+    #kpiSaveCard{ background:var(--c-vantaggi-bg); border-color:var(--c-vantaggi-br); }
+    #kpiSaveCard .label::after{ content:""; }
+
+    /* Sostenibilità: base azzurro, warn ambra */
+    #kpiAffordCard{ background:var(--c-scelte-bg); border-color:var(--c-scelte-br); }
+    #kpiAffordCard.box-warn{ background:var(--c-warn-bg) !important; border-color:var(--c-warn-br) !important; }
+
+
+  
+    /* --- Livelli concettuali (palette calda ma elegante) --- */
+    :root{
+      --c-dati-bg:#fff7ed;      /* arancio molto tenue */
+      --c-dati-br:#fed7aa;
+      --c-scelte-bg:#eff6ff;    /* azzurro tenue */
+      --c-scelte-br:#bfdbfe;
+      --c-vantaggi-bg:#ecfdf5;  /* verde acqua tenue */
+      --c-vantaggi-br:#a7f3d0;
+      --c-info-bg:#f5f3ff;      /* viola tenue */
+      --c-info-br:#ddd6fe;
+      --c-warn-bg:#fffbeb;      /* ambra tenue */
+      --c-warn-br:#fcd34d;
+    }
+
+    .box-dati{
+      background:var(--c-dati-bg);
+      border:1px solid var(--c-dati-br);
+    }
+    .box-scelte{
+      background:var(--c-scelte-bg);
+      border:1px solid var(--c-scelte-br);
+    }
+    .box-vantaggi{
+      background:var(--c-vantaggi-bg);
+      border:1px solid var(--c-vantaggi-br);
+    }
+    .box-info{
+      background:var(--c-info-bg);
+      border:1px solid var(--c-info-br);
+    }
+    .box-warn{
+      background:var(--c-warn-bg);
+      border:1px solid var(--c-warn-br);
+    }
+
+    /* piccoli accorgimenti estetici */
+    .readonly-box.box-dati, .readonly-box.box-scelte, .readonly-box.box-vantaggi, .readonly-box.box-info, .readonly-box.box-warn{
+      border-style:solid;
+    }
+    .callout.box-dati, .callout.box-scelte, .callout.box-vantaggi, .callout.box-info, .callout.box-warn{
+      background-clip:padding-box;
+    }
+    .kpi .card.box-vantaggi{
+      border-color:var(--c-vantaggi-br);
+    }
+    .kpi .card.box-warn{
+      border-color:var(--c-warn-br);
+    }
+
+    button:hover{ filter:brightness(0.98); }
+  
+  /* Visual cues */
+  .status-banner{font-weight:800; padding:.45rem .6rem; border-radius:10px; display:inline-block;}
+  .status-ok{background:#e9f8ee; color:#0a6b2a;}
+  .status-mid{background:#fff4e5; color:#8a4b00;}
+  .status-bad{background:#ffe8e8; color:#a40000;}
+  .status-na{background:#f3f4f6; color:#374151;}
+
+  /* Objective pills */
+  #btCasa:checked + label.pill{background:#e9f8ee; border-color:#0a6b2a; color:#0a6b2a; font-weight:800;}
+  #btInv:checked + label.pill{background:#fff4e5; border-color:#8a4b00; color:#8a4b00; font-weight:800;}
+
+  /* Help box color sync */
+  .help-casa{border-left:6px solid #0a6b2a; background:#e9f8ee;}
+  .help-inv{border-left:6px solid #8a4b00; background:#fff4e5;}
+
+  /* Choices emphasis */
+  .choices-grid .field{background:var(--c-info-bg); border:1px solid var(--c-info-br); border-radius:12px; padding:.6rem;}
+  .choices-grid .field > label{font-weight:800;}
+
+  /* Caparre annue su una riga (solo 48 mesi) */
+  #caparreAnnueBox .caparre-row{display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap;}
+#caparreAnnueBox .caparre-row .field{flex:1; min-width:180px;}
+@media (min-width: 980px){
+  #caparreAnnueBox .caparre-row{flex-wrap:nowrap;}
+  #caparreAnnueBox .caparre-row .field{min-width:0;}
+}
+  #caparreAnnueBox .cap-mini{flex:1; min-width:0;}
+  #caparreAnnueBox .cap-mini span{display:block; font-weight:800; font-size:.82rem; margin-bottom:.2rem;}
+  #caparreAnnueBox .cap-mini input{width:100%;}
+  @media (max-width: 720px){
+    #caparreAnnueBox .caparre-row{flex-wrap:wrap;}
+  }
+  /* Offerta: evita a capo artificiale per i <strong> dentro l'elenco */
+  .offer-list li strong{display:inline; margin:0;}
+
+
+  html, body { overflow-x: hidden; }
+  .grid-single { grid-template-columns: 1fr !important; }
+
+  .price-mercato{font-weight:800;}
+  .price-48{font-weight:800;}
+  .price-60{font-weight:800;}
+  .price-grezzo{font-weight:800;}
+  .price-mercato{color:#3b3b3b;}
+  .price-48{color:#1b7f3a;}
+  .price-60{color:#b45309;}
+  .price-grezzo{color:#b91c1c;}
+  .price-stack .row{display:flex; gap:.4rem; align-items:baseline; flex-wrap:wrap;}
+  .price-stack .lbl{min-width: 170px;}
+  .price-stack .val{white-space:nowrap;}
+
+    /* --- Comunicazione commerciale --- */
+    .intro-commerciale{
+      background:#fff;
+      border:1px solid rgba(0,0,0,0.08);
+      border-radius:14px;
+      padding:1rem 1.1rem;
+      margin:.9rem 0 1rem 0;
+      box-shadow:0 10px 30px rgba(0,0,0,0.06);
+    }
+    .intro-commerciale h2{ margin:.1rem 0 .5rem; font-size:1.05rem; }
+    .intro-commerciale p{ margin:.35rem 0; color:rgba(0,0,0,0.78); }
+    .box-vantaggi-chiave{ border-left:5px solid rgba(0,0,0,0.12); }
+    .note-guida{
+      background:#fff;
+      border:1px dashed rgba(0,0,0,0.18);
+      border-radius:14px;
+      padding:.85rem 1rem;
+      margin:1rem 0 .7rem 0;
+    }
+    .note-guida p{ margin:.35rem 0 0; color:rgba(0,0,0,0.76); }
+    .micro{ font-size:.92rem; color:rgba(0,0,0,0.72); }
+    .disclaimer{ opacity:.92; }
+
+</style>
 </head>
 <body>
 <div class="container">
-  <h1>Simulatore Acquisto Personalizzato</h1>
-  <div class="note">
-    Seleziona l'unità immobiliare e personalizza caparre, mese di saldo e reddito per vedere sconti, saldo e sostenibilità.
+  <h1>Simulatore Acquisto Guidato</h1>
+
+  <section class="intro-commerciale" aria-label="Proposta di valore">
+    <h2>Una proposta di acquisto pensata per darti libertà</h2>
+    <p>
+      Questa vendita guidata ti permette di scegliere oggi la tua nuova casa e costruire l’acquisto nel tempo,
+      con un percorso chiaro, personalizzabile e sostenibile.
+    </p>
+    <p>
+      Puoi valutare diverse soluzioni, simulare scenari economici e prendere decisioni consapevoli,
+      mantenendo sempre il controllo su tempi, importi e modalità di acquisto.
+    </p>
+  </section>
+
+<div class="note">
+    Seleziona l'unità e indica il tuo obiettivo (abitarci o investimento). Il simulatore mostra prezzi scontati, flessibilità di pagamento e sostenibilità del mutuo.
   </div>
 
   <h2>1. Seleziona l'unità</h2>
@@ -103,10 +304,10 @@
         <label for="unitaSelect">ID unità</label>
         <select id="unitaSelect"></select>
       </div>
-      <div class="readonly-box" id="infoUnita"></div>
+      <div class="readonly-box box-dati" id="infoUnita"></div>
     </div>
     <div>
-      <div class="readonly-box" id="prezziUnita"></div>
+      <div class="readonly-box box-dati" id="prezziUnita"></div>
     </div>
   </div>
 
@@ -116,14 +317,82 @@
       <img id="schedaImg"
            alt="Scheda dell'unità selezionata"
            style="max-width:100%; height:auto; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.15);">
+      <div id="galleryWrap" style="margin-top:.8rem;">
+        <div id="galleryThumbs" style="display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center;"></div>
+      </div>
+
       <div class="note">
         L'immagine riportata è una scheda informativa con planimetria, foto e note commerciali.
       </div>
     </div>
   </div>
 
+  <div id="azioniRapide" class="callout box-info" style="margin-top:1rem;">
+    <strong>Azioni rapide</strong>
+    <div class="pillbox" style="margin-top:.6rem;">
+      <button type="button" id="btnTopWaBiz" class="btn btn-primary">💬 WhatsApp Business</button>
+      <button type="button" id="btnTopEmail" class="btn">✉️ Email dedicata</button>
+      <span style="flex:1"></span>
+      <button type="button" id="btnTopShareWhats" class="btn">📲 Condividi WhatsApp</button>
+      <button type="button" id="btnTopShareMail" class="btn">📧 Condividi Email</button>
+      <button type="button" id="btnTopCopiaLink" class="btn">🔗 Copia link</button>
+      <button type="button" id="btnTopVisita" class="btn btn-primary">🏠 Richiedi visita</button>
+    </div>
+    <div class="note" id="topActionStatus" style="margin-top:.4rem;"></div>
+  </div>
+
+
+  <h2>0. Come funziona l’offerta</h2>
+  <div class="callout box-info" style="margin-bottom:1rem;">
+    <strong>Tre modi di acquistare (prezzi già scontati rispetto al valore di mercato)</strong>
+    <ul class="offer-list">
+      <li><strong>48 mesi + saldo finale</strong>: prezzo in offerta <strong>bloccato per tutta la durata (48 mesi)</strong>, pagamento personalizzabile e <strong>zero interessi</strong> durante il percorso.</li>
+      <li><strong>Pagamento entro ~60 giorni</strong>: ulteriore riduzione del prezzo (pagabile anche con mutuo).</li>
+      <li><strong>Grezzo</strong> (solo per alcuni immobili): ulteriore riduzione acquistando nello stato attuale e rifinendo in autonomia con propria impresa.</li>
+    </ul>
+    <div class="note muted" style="margin-top:.4rem;">Questo sito è un simulatore informativo per <strong>vendita diretta</strong>: non è un portale di intermediazione e non prevede provvigioni.</div>
+    <div class="note" style="margin-top:.5rem;">Tutti gli importi sono indicativi. Il mutuo mostrato è un esempio (<strong>30 anni</strong>, tasso <strong>2,8%</strong>). La sostenibilità è valutata con regola prudenziale: <strong>rata ≤ 30% del reddito netto</strong>.</div>
+  </div>
+
+      <div class="callout box-vantaggi-chiave" aria-label="Vantaggi chiave della formula 48 mesi" style="margin-top:.8rem;">
+        <strong>Vantaggi chiave della formula 48 mesi</strong>
+        <ul class="offer-list" style="margin-top:.4rem;">
+          <li><strong>Prezzo bloccato</strong>: il valore concordato oggi resta invariato per l’intera durata del percorso, indipendentemente dall’andamento del mercato.</li>
+          <li><strong>Zero interessi</strong>: durante il percorso non maturano interessi sull’acquisto, secondo le condizioni previste.</li>
+        </ul>
+        <div class="micro disclaimer" style="margin-top:.3rem;">
+          Le condizioni di prezzo bloccato e assenza interessi sono quelle previste dalla documentazione contrattuale.
+        </div>
+      </div>
+
+
+  <h2>0.1 Il tuo obiettivo</h2>
+  <div class="grid grid-single" style="align-items:start;">
+    <div>
+      <div class="field">
+        <label>Sto acquistando principalmente per</label>
+        <div class="pillbox" role="tablist" aria-label="Seleziona obiettivo">
+          <input type="radio" name="buyerType" id="btCasa" value="casa" checked>
+          <label class="pill" for="btCasa">Abitarci</label>
+          <input type="radio" name="buyerType" id="btInv" value="investimento">
+          <label class="pill" for="btInv">Investimento</label>
+        </div>
+      </div>
+      <div class="callout box-scelte" id="buyerHelp">
+        <strong>Abitarci</strong>
+        Inserisci il tuo reddito netto: il simulatore ti dice se la rata del mutuo è sostenibile e, se serve, quanto anticipare per rientrare nel 30%.
+      </div>
+    </div>
+    <div>
+      <div class="callout box-vantaggi" id="scenarioHelp">
+        <strong>Consiglio rapido</strong>
+        Se vuoi massimizzare lo sconto con la formula <strong>48 mesi</strong>, puoi anche valutare un saldo anticipato entro 24 mesi: lo sconto viene calcolato automaticamente.
+      </div>
+    </div>
+  </div>
+
   <h2>3. Scelte dell'acquirente</h2>
-  <div class="grid">
+  <div class="grid choices-grid" id="choicesGrid">
     <div>
       <div class="field">
         <label for="scenario">Scenario di prezzo (base per i calcoli)</label>
@@ -132,47 +401,105 @@
           <option value="60gg">Pagamento entro 60 giorni</option>
           <option value="grezzo">Grezzo (se disponibile)</option>
         </select>
-      </div>
+      </div>      <div id="meseRiscattoBox">
+
       <div class="field">
         <label for="meseRiscatto">Mese di saldo/riscatto (1–48)</label>
         <input type="number" id="meseRiscatto" min="1" max="48" value="48">
       </div>
-      <div class="field">
+            </div>
+      <div class="note muted" id="meseRiscattoNote60" style="margin-top:-.2rem; display:none;">
+        Per questa modalità, il saldo avviene <strong>entro ~60 giorni</strong> (mese 1–2).
+      </div>
+<div class="field">
         <label for="caparraPerc">Caparra iniziale (% sul prezzo di riferimento)</label>
         <input type="number" id="caparraPerc" min="0" max="100" value="20">
       </div>
+      <div id="caparreAnnueBox">
       <div class="field">
-        <label for="caparraAnno1">Caparra anno 1 (€)</label>
-        <input type="number" id="caparraAnno1" min="0" value="3000">
+        <label>Caparre annue (solo 48 mesi)</label>
+        <div class="caparre-row">
+          <div class="cap-mini"><span>Anno 1</span><input type="number" id="caparraAnno1" min="0" value="3000"></div>
+          <div class="cap-mini"><span>Anno 2</span><input type="number" id="caparraAnno2" min="0" value="3000"></div>
+          <div class="cap-mini"><span>Anno 3</span><input type="number" id="caparraAnno3" min="0" value="3000"></div>
+        </div>
       </div>
-      <div class="field">
-        <label for="caparraAnno2">Caparra anno 2 (€)</label>
-        <input type="number" id="caparraAnno2" min="0" value="3000">
+
+  <div class="note-guida" aria-label="Guida alle simulazioni">
+    <strong>Come usare questa simulazione</strong>
+    <p>
+      Le scelte che fai in questa pagina servono a costruire uno scenario di acquisto personalizzato.
+      Puoi modificare i valori liberamente per capire come cambiano tempi, importi e modalità, senza alcun impegno.
+    </p>
+  </div>
+
+      <div class="note muted" id="caparreAnnueNote" style="margin-top:.2rem;">Le caparre anno 1–2–3 si usano solo nella formula <strong>48 mesi</strong>.</div>
       </div>
-      <div class="field">
-        <label for="caparraAnno3">Caparra anno 3 (€)</label>
-        <input type="number" id="caparraAnno3" min="0" value="3000">
-      </div>
-      <div class="field">
+<div class="field">
         <label for="redditoNetto">Reddito netto mensile (€)</label>
         <input type="number" id="redditoNetto" min="0" value="2000">
       </div>
     </div>
     <div>
-      <div class="readonly-box">
+      <div class="readonly-box box-info">
         <div><strong>Note operative</strong></div>
         <ul style="padding-left:1.1rem;margin:0.4rem 0;font-size:.8rem;">
           <li>Scenario <strong>48 mesi</strong>: se il saldo è entro il mese 1 o 2, si applica automaticamente il prezzo “entro 60 giorni” senza ulteriori sconti.</li>
           <li>Scenario <strong>60 giorni</strong>: il prezzo è già scontato, non si applicano ulteriori sconti.</li>
-          <li>Scenario <strong>Grezzo</strong>: nessuno sconto aggiuntivo; il saldo deve comunque avvenire entro 60 giorni per accordo commerciale.</li>
+          <li>Scenario <strong>Grezzo</strong>: prezzo dedicato (se previsto). Per accordo commerciale il saldo avviene entro ~60 giorni.</li>
           <li>Gli sconti per saldo anticipato (36/24/12 canoni) si applicano solo allo scenario 48 mesi, con saldo entro il 24° mese.</li>
         </ul>
       </div>
     </div>
   </div>
 
-  <h2>4. Risultati della simulazione</h2>
+  
+  <h2>Impostazioni mutuo (facoltative)</h2>
+  <div class="grid box-scelte" style="border-radius:12px; padding:1rem; margin-bottom:1rem;">
+    <div class="field">
+      <label for="anniMutuo">Durata mutuo (anni)</label>
+      <input type="number" id="anniMutuo" min="5" max="40" value="30">
+    </div>
+    <div class="field">
+      <label for="tassoMutuo">Tasso annuo (%)</label>
+      <input type="number" id="tassoMutuo" min="0" max="10" step="0.1" value="2.8">
+    </div>
+    <div class="note muted" style="grid-column:1/-1;">
+      La durata massima del mutuo può dipendere dall’età del richiedente e dalle politiche della banca.
+      La simulazione è indicativa.
+    </div>
+  </div>
+
+<h2>4. Risultati della simulazione</h2>
   <div class="results" id="resultsBox">
+
+  <div class="kpi" id="kpiBox">
+    <div class="card box-vantaggi" id="kpiSaveCard">
+      <div class="label">Risparmio rispetto al valore di mercato</div>
+      <div class="value kpi-hero" id="outRisparmio">—</div>
+      <div class="sub muted kpi-sub" id="outRisparmioPerc">—</div>
+    </div>
+    <div class="card" id="kpiAffordCard">
+      <div class="label">Per rientrare nel 30% del reddito</div>
+      <div class="value" id="outAnticipoReddito">—</div>
+      <div class="sub muted kpi-sub" id="outMutuoSostenibile">—</div>
+    </div>
+    <div class="card box-vantaggi" id="invCard">
+      
+      <div class="label">Investimento: rata vs rendita</div>
+      <div class="value" id="outGapRataRendita">—</div>
+      <div class="sub muted" id="outAnticipoRendita">—</div>
+      <div class="note muted" style="margin-top:.45rem;">
+        <strong>Opzioni utili per investimento</strong>
+        <ul style="margin:.35rem 0 0; padding-left:1.1rem; font-size:.8rem; line-height:1.25;">
+          <li>Possibilità di <strong>cedere il contratto</strong> (a condizioni contrattuali).</li>
+          <li>Possibilità di <strong>nominare un terzo</strong> all’atto definitivo (a condizioni contrattuali).</li>
+          <li>Possibilità di <strong>sublocare</strong> l’immobile (nel rispetto delle regole vigenti).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
     <div class="results-row">
       <span>Prezzo di riferimento per la simulazione</span>
       <span id="outPrezzoRif"></span>
@@ -231,7 +558,30 @@
   </div>
 </div>
 
+  
+<!-- Sezione Condividi rimossa: usa Azioni rapide -->
 <script>
+
+
+
+
+  // === CONFIG CONTATTI (personalizza) ===
+  const CONTACT_WA_NUMBER = "393514204990"; // WhatsApp Business, senza +
+  const CONTACT_EMAIL = "abitare0@gmail.com";
+
+  function openWhatsApp(text){
+    const url = "https://wa.me/" + CONTACT_WA_NUMBER + "?text=" + encodeURIComponent(text);
+    // mobile: meglio stessa scheda
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) window.location.href = url;
+    else window.open(url, "_blank");
+  }
+  function openEmail(subject, body){
+    const mailto = "mailto:" + encodeURIComponent(CONTACT_EMAIL) +
+      "?subject=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(body);
+    window.location.href = mailto;
+  }
+
 const formatterEuro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
 const formatterPerc = new Intl.NumberFormat('it-IT', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -431,7 +781,7 @@ const unita = [
     "comune": "Marigliano",
     "indirizzo": "Via Luigi Mautone 91",
     "tipologia": "Appartamento",
-    "supTotMq": 103,
+    "supTotMq": 113,
     "valoreMercato": 226550,
     "prezzo48": 199955,
     "prezzo60": 177300,
@@ -448,7 +798,7 @@ const unita = [
     "comune": "Marigliano",
     "indirizzo": "Via Luigi Mautone 91",
     "tipologia": "Appartamento",
-    "supTotMq": 91,
+    "supTotMq": 101,
     "valoreMercato": 186755,
     "prezzo48": 163980,
     "prezzo60": 141205,
@@ -465,7 +815,7 @@ const unita = [
     "comune": "Marigliano",
     "indirizzo": "Via Luigi Mautone 91",
     "tipologia": "Appartamento",
-    "supTotMq": 103,
+    "supTotMq": 113,
     "valoreMercato": 233938,
     "prezzo48": 211775,
     "prezzo60": 187150,
@@ -482,7 +832,7 @@ const unita = [
     "comune": "Marigliano",
     "indirizzo": "Via Luigi Mautone 91",
     "tipologia": "Appartamento",
-    "supTotMq": 91,
+    "supTotMq": 101,
     "valoreMercato": 191310,
     "prezzo48": 168535,
     "prezzo60": 145760,
@@ -589,6 +939,247 @@ const cap1Input = document.getElementById('caparraAnno1');
 const cap2Input = document.getElementById('caparraAnno2');
 const cap3Input = document.getElementById('caparraAnno3');
 const redditoInput = document.getElementById('redditoNetto');
+const anniMutuoInput = document.getElementById('anniMutuo');
+const tassoMutuoInput = document.getElementById('tassoMutuo');
+
+
+
+const buyerTypeEls = Array.from(document.querySelectorAll('input[name="buyerType"]'));
+function getBuyerType(){
+  const sel = buyerTypeEls.find(x => x.checked);
+  return sel ? sel.value : "casa";
+}
+
+
+
+function getState(){
+  const u = getUnitaCorrente();
+  return {
+    id: u.id,
+    buyer: getBuyerType(),
+    scenario: scenarioSel.value,
+    mese: parseInt(meseInput.value)||48,
+    capPerc: parseFloat(caparraPercInput.value)||0,
+    cap1: parseFloat(document.getElementById('caparraAnno1')?.value)||0,
+    cap2: parseFloat(document.getElementById('caparraAnno2')?.value)||0,
+    cap3: parseFloat(document.getElementById('caparraAnno3')?.value)||0,
+    reddito: parseFloat(redditoInput.value)||0,
+    anni: parseInt(anniMutuoInput.value)||30,
+    tasso: parseFloat(tassoMutuoInput.value)||2.8,
+    invite: (document.getElementById('refCode')?.value||"").trim()
+  };
+}
+
+
+
+function scenarioLabel(v){
+  if (v === "48mesi") return "48 mesi (rateizzato)";
+  if (v === "60gg") return "Pagamento entro 60 giorni";
+  if (v === "grezzo") return "Grezzo (se previsto)";
+  return v || "—";
+}
+
+
+function parseEuroText(txt){
+  // Estrae numero da stringhe tipo "€ 12.345,00 ..." o "€0 da anticipare"
+  if (!txt) return NaN;
+  const t = txt.replace(/\s/g,'');
+  const m = t.match(/-?\d+[\d\.,]*/);
+  if (!m) return NaN;
+  // normalizza: rimuove separatori migliaia "." e usa "." come decimale
+  let num = m[0].replace(/\./g,'').replace(/,/g,'.');
+  const v = parseFloat(num);
+  return isNaN(v) ? NaN : v;
+}
+
+function getEssentials(){
+  const byId = (id) => (document.getElementById(id)?.textContent || "—").trim();
+  const u = getUnitaCorrente();
+
+  // formatter locali (evita dipendenze da variabili in altre funzioni)
+  const fmtEuro = new Intl.NumberFormat('it-IT', { style:'currency', currency:'EUR', maximumFractionDigits:0 });
+  const valoreMercatoNum = (u && (u.valoreMercato ?? u.valore_mercato ?? u.valore ?? null));
+  const valoreMercato = (valoreMercatoNum !== null && valoreMercatoNum !== undefined && valoreMercatoNum !== "" && !isNaN(Number(valoreMercatoNum)))
+    ? fmtEuro.format(Number(valoreMercatoNum))
+    : "—";
+
+  const prezzo = byId("outPrezzoNetto");
+  const saldo = byId("outSaldoFinale");
+  const rata = byId("outRata");
+  const esito = byId("outEsito");
+  const risp = byId("outRisparmio");
+  const anticipoReddito = byId("outAnticipoReddito");
+  const canone = byId("outCanoni");
+  const anticipoRendita = byId("outAnticipoRendita");
+
+  // Mutuo fino al 100%: se l'anticipo per reddito è 0
+  const antR = parseEuroText(anticipoReddito);
+  const mutuo100 = (!isNaN(antR) && antR <= 0)
+    ? "Sì (in base a reddito/rendita e valutazione banca)"
+    : "Possibile (dipende da reddito/rendita e banca)";
+
+  return {
+    valoreMercato,
+    prezzo,
+    risparmio: risp,
+    saldo,
+    rata,
+    esito,
+    anticipoReddito,
+    canone,
+    anticipoRendita,
+    mutuo100
+  };
+}
+
+
+function generateInviteCode(){
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // evita 0/O/1/I
+  let out = "PC-";
+  for (let i=0;i<6;i++){
+    out += alphabet[Math.floor(Math.random()*alphabet.length)];
+  }
+  return out;
+}
+
+function normalizeInvite(v){
+  return (v||"").toString().trim().toUpperCase().replace(/\s+/g,"").slice(0,24);
+}
+
+function buildShareUrl(){
+  const s = getState();
+  // Modello C (ibrido): se non inserito, genera automaticamente un codice invito
+  s.invite = normalizeInvite(s.invite);
+  if (!s.invite){
+    s.invite = generateInviteCode();
+    const refEl = document.getElementById('refCode');
+    if (refEl) refEl.value = s.invite;
+  }
+  const params = new URLSearchParams();
+  Object.entries(s).forEach(([k,v]) => {
+    if (v === null || v === undefined) return;
+    if (typeof v === "string" && v.length === 0) return;
+    params.set(k, String(v));
+  });
+  const base = window.location.origin + window.location.pathname;
+  return base + "?" + params.toString();
+}
+
+function applyStateFromUrl(){
+  const p = new URLSearchParams(window.location.search);
+  if (!p.has("id")) return;
+
+  const id = p.get("id");
+  if (id){
+    const opt = Array.from(unitaSelect.options).find(o => o.value === id);
+    if (opt) unitaSelect.value = id;
+  }
+
+  const buyer = p.get("buyer");
+  if (buyer){
+    const el = Array.from(document.querySelectorAll('input[name="buyerType"]')).find(x => x.value === buyer);
+    if (el) el.checked = true;
+  }
+
+  const scenario = p.get("scenario");
+  if (scenario) scenarioSel.value = scenario;
+
+  const mese = parseInt(p.get("mese")||"",10);
+  if (!isNaN(mese)) meseInput.value = mese;
+
+  const capPerc = parseFloat(p.get("capPerc")||"");
+  if (!isNaN(capPerc)) caparraPercInput.value = capPerc;
+
+  const cap1 = parseFloat(p.get("cap1")||"");
+  const cap2 = parseFloat(p.get("cap2")||"");
+  const cap3 = parseFloat(p.get("cap3")||"");
+  if (!isNaN(cap1)) document.getElementById('caparraAnno1').value = cap1;
+  if (!isNaN(cap2)) document.getElementById('caparraAnno2').value = cap2;
+  if (!isNaN(cap3)) document.getElementById('caparraAnno3').value = cap3;
+
+  const reddito = parseFloat(p.get("reddito")||"");
+  if (!isNaN(reddito)) redditoInput.value = reddito;
+
+  const anni = parseInt(p.get("anni")||"",10);
+  if (!isNaN(anni)) anniMutuoInput.value = anni;
+
+  const tasso = parseFloat(p.get("tasso")||"");
+  if (!isNaN(tasso)) tassoMutuoInput.value = tasso;
+
+  const invite = p.get("invite");
+  if (invite && document.getElementById('refCode')) document.getElementById('refCode').value = invite;
+}
+
+function toggleMeseFields(){
+  const scenario = scenarioSel.value;
+  const box = document.getElementById('meseRiscattoBox');
+  const note60 = document.getElementById('meseRiscattoNote60');
+  const meseEl = document.getElementById('meseRiscatto');
+  const is48 = (scenario === "48mesi");
+  const show = is48;
+  if (box) box.classList.toggle('hide', !show);
+  if (note60) note60.style.display = is48 ? "none" : "block";
+  if (meseEl) meseEl.disabled = !is48;
+}
+
+function updateCaparreEnabled(){
+  const scenario = scenarioSel.value;
+  const cap1 = document.getElementById('caparraAnno1');
+  const cap2 = document.getElementById('caparraAnno2');
+  const cap3 = document.getElementById('caparraAnno3');
+  const box = document.getElementById('caparreAnnueBox');
+
+  const is48 = (scenario === "48mesi");
+  let mese = parseInt(meseInput.value, 10);
+  if (isNaN(mese) || mese < 1) mese = 1;
+  if (mese > 48) mese = 48;
+
+  const enable1 = is48 && mese > 12;
+  const enable2 = is48 && mese > 24;
+  const enable3 = is48 && mese > 36;
+
+  const setEnabled = (el, enabled) => {
+    if (!el) return;
+    el.disabled = !enabled;
+    if (!enabled) el.value = 0; // evita confusione: non conteggiata -> azzero
+  };
+
+  if (box) box.classList.toggle('hide', !is48);
+
+  setEnabled(cap1, enable1);
+  setEnabled(cap2, enable2);
+  setEnabled(cap3, enable3);
+}
+
+function toggleScenarioFields(){
+  toggleMeseFields();
+  updateCaparreEnabled();
+}
+
+function aggiornaHelp(){
+  const t = getBuyerType();
+  const buyerHelp = document.getElementById('buyerHelp');
+  if (buyerHelp) buyerHelp.classList.remove('help-casa','help-inv');
+  const invCard = document.getElementById('invCard');
+  if (t === "investimento"){
+  if (buyerHelp) buyerHelp.classList.add('help-inv');
+      buyerHelp.innerHTML = `<strong>Investimento</strong>
+      <div style="margin-top:.25rem;">
+        Inserisci reddito (per la banca) e usa la rendita teorica per capire quanta parte della rata è coperta dal canone e quanto anticipo servirebbe per avere una rata pari alla rendita.
+      </div>
+      <div class="note muted" style="margin-top:.45rem;">
+        <strong>Extra valore per investitori</strong>: con la formula <strong>48 mesi</strong> il <strong>prezzo resta bloccato</strong> per tutta la durata e non paghi <strong>interessi</strong> sul percorso.
+        Inoltre, l’acquisto può essere strutturato per massimizzare la flessibilità (es. <strong>cessione del contratto</strong>, <strong>nomina di un terzo all’atto definitivo</strong>, <strong>sublocazione</strong>).
+      </div>`;
+    invCard.classList.remove('hide');
+  } else {
+  if (buyerHelp) buyerHelp.classList.add('help-casa');
+      buyerHelp.innerHTML = `<strong>Abitarci</strong>
+      Inserisci il tuo reddito netto: il simulatore ti dice se la rata del mutuo è sostenibile e, se serve, quanto anticipare per rientrare nel 30%.`;
+    invCard.classList.add('hide');
+  }
+}
+
 
 function popolaSelect() {
   unita.forEach(u => {
@@ -610,30 +1201,24 @@ function aggiornaInfoUnita() {
   const prezzi = document.getElementById('prezziUnita');
 
   info.innerHTML = `
-    <div><strong>${u.id}</strong> – ${u.tipologia}</div>
-    <div>${u.comune} – ${u.indirizzo}</div>
+    <div><strong>${u.id}</strong> – ${u.tipologia} | ${u.comune} – ${u.indirizzo}</div>
     <div>Superficie totale: <strong>${u.supTotMq} mq</strong></div>
-    <div>Rendita annua teorica: <strong>${formatterEuro.format(u.renditaAnnua)}</strong></div>
-    <div>Canone mensile teorico pieno: <strong>${formatterEuro.format(u.canoneMensile)}</strong></div>
+    <div>Rendita annua: <strong>${formatterEuro.format(u.renditaAnnua)}</strong> | Canone mensile: <strong>${formatterEuro.format(u.canoneMensile)}</strong></div>
   `;
 
   prezzi.innerHTML = `
-    <div><strong>Valore di mercato:</strong> ${formatterEuro.format(u.valoreMercato)}</div>
-    <div><strong>Prezzo 48 mesi + saldo mutuo:</strong> ${formatterEuro.format(u.prezzo48)}</div>
-    <div><strong>Prezzo in offerta entro 60 giorni:</strong> ${formatterEuro.format(u.prezzo60)}</div>
-    <div><strong>Prezzo al grezzo:</strong> ${
-      u.prezzoGrezzo ? formatterEuro.format(u.prezzoGrezzo) : "<span style='color:#6b7280'>non previsto</span>"
-    }</div>
-  `;
+    <div class="price-stack">
+      <div class="row"><span class="lbl"><strong>Valore di mercato</strong></span> <span class="val price-mercato">${formatterEuro.format(u.valoreMercato)}</span></div>
+      <div class="row"><span class="lbl"><strong>Offerta 48 mesi</strong></span> <span class="val price-48">${formatterEuro.format(u.prezzo48)}</span> <span style="color:#6b7280;">(pagamento personalizzabile)</span></div>
+      <div class="row"><span class="lbl"><strong>Offerta 60 giorni</strong></span> <span class="val price-60">${formatterEuro.format(u.prezzo60)}</span> <span style="color:#6b7280;">(ulteriore sconto)</span></div>
+      <div class="row"><span class="lbl"><strong>Offerta grezzo</strong></span> <span class="val price-grezzo">${
+        u.prezzoGrezzo ? formatterEuro.format(u.prezzoGrezzo) : "<span style='color:#6b7280'>non previsto</span>"
+      }</span></div>
+    </div>
+`;
 
-  const img = document.getElementById('schedaImg');
-  if (u.schedaImg) {
-    img.src = u.schedaImg;
-    img.style.display = "inline-block";
-  } else {
-    img.src = "";
-    img.style.display = "none";
-  }
+  // Galleria: carica foto (scheda + eventuali gallery)
+  loadImagesForUnit(u);
 }
 
 function calcolaPMT(tassoMensile, nRate, capitale) {
@@ -643,12 +1228,21 @@ function calcolaPMT(tassoMensile, nRate, capitale) {
 }
 
 function aggiornaSimulazione() {
+  toggleScenarioFields();
+  toggleMeseFields();
   const u = getUnitaCorrente();
   const scenario = scenarioSel.value; // "48mesi", "60gg", "grezzo"
   let mese = parseInt(meseInput.value, 10);
   if (isNaN(mese) || mese < 1) mese = 1;
   if (mese > 48) mese = 48;
   meseInput.value = mese;
+
+  // Regole operative: 60gg e Grezzo sono accordi a saldo rapido (~60 giorni)
+  if (scenario === "60gg" || scenario === "grezzo") {
+    if (mese > 2) mese = 2;
+    meseInput.value = mese;
+  }
+
 
   const capPerc = Math.max(0, parseFloat(caparraPercInput.value) || 0);
   const cap1 = Math.max(0, parseFloat(cap1Input.value) || 0);
@@ -715,7 +1309,9 @@ function aggiornaSimulazione() {
   // 10) Rata mutuo
   let rata = 0;
   if (mutuo > 0) {
-    rata = calcolaPMT(0.028 / 12, 30 * 12, mutuo);
+    const anni = Math.max(5, Math.min(40, parseInt(anniMutuoInput.value)||30));
+    const tasso = Math.max(0, parseFloat(tassoMutuoInput.value)||2.8);
+    rata = calcolaPMT((tasso/100)/12, anni * 12, mutuo);
     rata = -rata;
   }
 
@@ -738,6 +1334,42 @@ function aggiornaSimulazione() {
   // 13) Prezzo complessivo pagato netto sconti
   const prezzoNetto = prezzoRif > 0 ? (prezzoRif - scontoEuro) : 0;
 
+
+  // 14) KPI commerciali: risparmio vs mercato
+  const valoreMercato = u.valoreMercato || 0;
+  const risparmio = (valoreMercato > 0 && prezzoNetto > 0) ? (valoreMercato - prezzoNetto) : 0;
+  const risparmioPerc = (valoreMercato > 0 && risparmio > 0) ? (risparmio / valoreMercato) : 0;
+
+  // 15) KPI: quanto anticipare per rientrare nel 30% del reddito (mutuo sostenibile)
+  const maxRata = reddito > 0 ? (0.30 * reddito) : 0;
+  const anniKPI = Math.max(5, Math.min(40, parseInt(anniMutuoInput.value)||30));
+  const tassoKPI = Math.max(0, parseFloat(tassoMutuoInput.value)||2.8);
+  const r = (tassoKPI/100) / 12;
+  const n = anniKPI * 12;
+  let mutuoSostenibile = 0;
+  let anticipoPerReddito = 0;
+  if (maxRata > 0) {
+    mutuoSostenibile = r === 0 ? (maxRata * n) : (maxRata * (1 - Math.pow(1 + r, -n)) / r);
+    if (mutuo > mutuoSostenibile) {
+      anticipoPerReddito = mutuo - mutuoSostenibile;
+    }
+  }
+
+  // 16) KPI investimento: rata vs rendita e anticipo per rata = rendita
+  const buyerType = getBuyerType();
+  let gapRataRendita = 0;
+  let anticipoPerRendita = 0;
+  if (buyerType === "investimento") {
+    const renditaMensile = canonePieno; // stima canone pieno
+    gapRataRendita = rata - renditaMensile; // >0 da integrare, <0 coperta
+    if (renditaMensile > 0) {
+      const mutuoSostenibileDaRendita = r === 0 ? (renditaMensile * n) : (renditaMensile * (1 - Math.pow(1 + r, -n)) / r);
+      if (mutuo > mutuoSostenibileDaRendita) {
+        anticipoPerRendita = mutuo - mutuoSostenibileDaRendita;
+      }
+    }
+  }
+
   // --- Output ---
   document.getElementById('outPrezzoRif').textContent = prezzoRif ? formatterEuro.format(prezzoRif) : "-";
   document.getElementById('outCaparraIniziale').textContent = formatterEuro.format(caparraIniziale);
@@ -756,22 +1388,410 @@ function aggiornaSimulazione() {
   esitoSpan.textContent = esito || "—";
   esitoSpan.className = esitoClass;
 
+  // Evidenza visiva (colore) coerente col semaforo sostenibilità
+  const kpiAff = document.getElementById('kpiAffordCard');
+  if (kpiAff) {
+    kpiAff.classList.remove('box-warn');
+    if (esitoClass === "warn") kpiAff.classList.add('box-warn');
+  }
+
+
+  // KPI Output
+  document.getElementById('outRisparmio').textContent = (risparmio > 0) ? formatterEuro.format(risparmio) : "—";
+  document.getElementById('outRisparmioPerc').textContent = (risparmio > 0) ? `(${formatterPerc.format(risparmioPerc)} del valore di mercato)` : "—";
+
+  if (reddito > 0 && mutuo > 0) {
+    if (anticipoPerReddito > 0) {
+      document.getElementById('outAnticipoReddito').textContent = `${formatterEuro.format(anticipoPerReddito)} da anticipare`;
+      document.getElementById('outMutuoSostenibile').textContent = `Mutuo stimato sostenibile: ${formatterEuro.format(mutuoSostenibile)}`;
+    } else {
+      document.getElementById('outAnticipoReddito').textContent = `Nessun anticipo richiesto`;
+      document.getElementById('outMutuoSostenibile').textContent = `Rata entro il 30% del reddito`;
+    }
+  } else {
+    document.getElementById('outAnticipoReddito').textContent = "—";
+    document.getElementById('outMutuoSostenibile').textContent = "Inserisci reddito e scenario";
+  }
+
+  const invCard = document.getElementById('invCard');
+  if (buyerType === "investimento") {
+    invCard.classList.remove('hide');
+    if (rata > 0) {
+      if (gapRataRendita > 0) {
+        document.getElementById('outGapRataRendita').textContent = `${formatterEuro.format(gapRataRendita)} / mese da integrare`;
+      } else {
+        document.getElementById('outGapRataRendita').textContent = `Rendita ≥ rata (${formatterEuro.format(-gapRataRendita)} / mese di margine)`;
+      }
+      document.getElementById('outAnticipoRendita').textContent = (anticipoPerRendita > 0)
+        ? `Per rata ≈ rendita: anticipa ${formatterEuro.format(anticipoPerRendita)}`
+        : "Rata già in linea con la rendita";
+    } else {
+      document.getElementById('outGapRataRendita').textContent = "—";
+      document.getElementById('outAnticipoRendita').textContent = "—";
+    }
+  } else {
+    invCard.classList.add('hide');
+  }
+
+
   document.getElementById('outPrezzoNetto').textContent = prezzoNetto ? formatterEuro.format(prezzoNetto) : "—";
+}
+
+
+  // === GALLERIA FOTO (senza backend) ===
+// Nota: su GitHub Pages non puoi "listare" una cartella. Quindi:
+// - se vuoi una galleria 100% deterministica: usa u.gallery = ["immagine/...jpg", ...]
+// - fallback: prova convenzioni file comuni (ID/01.jpg, ID_01.jpg, ID.png) e mostra tutte quelle che esistono.
+
+function candidateImageUrls(unit){
+  const unitId = (typeof unit === "string") ? unit : (unit?.id || "");
+  const out = [];
+
+  // 0) elenco esplicito (preferito)
+  if (unit && typeof unit === "object" && Array.isArray(unit.gallery) && unit.gallery.length){
+    unit.gallery.forEach(u => { if (u) out.push(String(u)); });
+  }
+
+  // 1) scheda singola dichiarata in dataset
+  if (unit && typeof unit === "object" && unit.schedaImg) out.push(unit.schedaImg);
+
+  // 2) cartella per ID: immagine/ID/01.jpg...
+  for (let i=1;i<=12;i++){
+    const n = String(i).padStart(2,'0');
+    out.push(`immagine/${unitId}/${n}.jpg`);
+    out.push(`immagine/${unitId}/${n}.png`);
+    out.push(`immagine/${unitId}/${n}.webp`);
+  }
+
+  // 3) prefisso: immagine/ID_01.jpg...
+  for (let i=1;i<=12;i++){
+    const n = String(i).padStart(2,'0');
+    out.push(`immagine/${unitId}_${n}.jpg`);
+    out.push(`immagine/${unitId}_${n}.png`);
+    out.push(`immagine/${unitId}_${n}.webp`);
+  }
+
+  // 4) scheda singola: immagine/ID.png/jpg
+  out.push(`immagine/${unitId}.png`);
+  out.push(`immagine/${unitId}.jpg`);
+
+  // dedupe (mantiene ordine)
+  return Array.from(new Set(out));
+}
+
+function loadImagesForUnit(unit){
+  const main = document.getElementById('schedaImg');
+  const thumbs = document.getElementById('galleryThumbs');
+  if (!main || !thumbs) return;
+
+  thumbs.innerHTML = "";
+
+  const urls = candidateImageUrls(unit);
+  const found = [];
+  let pending = 0;
+  let finalized = false;
+
+  const setMain = (src) => {
+    main.src = src;
+    main.style.display = "inline-block";
+  };
+
+  const finalize = () => {
+    if (finalized) return;
+    finalized = true;
+
+    if (!found.length){
+      main.removeAttribute('src');
+      main.alt = "Foto non disponibili";
+      main.style.display = "none";
+      const msg = document.createElement('div');
+      msg.className = "note";
+      msg.textContent = "Foto non disponibili per questa unità. Verifica la cartella /immagine e i nomi file.";
+      thumbs.appendChild(msg);
+      return;
+    }
+
+    setMain(found[0]);
+
+    found.forEach((u) => {
+      const im = document.createElement('img');
+      im.src = u;
+      im.alt = "foto";
+      im.loading = "lazy";
+      im.decoding = "async";
+      im.style.width = "84px";
+      im.style.height = "64px";
+      im.style.objectFit = "cover";
+      im.style.borderRadius = "10px";
+      im.style.cursor = "pointer";
+      im.style.boxShadow = "0 2px 10px rgba(0,0,0,.12)";
+      im.addEventListener('click', () => setMain(u));
+      thumbs.appendChild(im);
+    });
+  };
+
+  urls.forEach((u) => {
+    pending++;
+    const img = new Image();
+    img.onload = () => { found.push(u); pending--; if (pending === 0) finalize(); };
+    img.onerror = () => { pending--; if (pending === 0) finalize(); };
+    img.src = u;
+  });
+
+  // safety: su file:// o CORS strani, non bloccare l'UI
+  setTimeout(() => { if (!finalized) finalize(); }, 1500);
+}
+
+// === AZIONI RAPIDE (top) ===
+
+  function buildContactPayload(){
+    const u = document.getElementById('unitaSelect')?.value || "";
+    const buyer = document.querySelector('input[name="buyerType"]:checked')?.value || "casa";
+    const scenario = document.getElementById('scenario')?.value || "";
+    const rata = document.getElementById('outRata')?.textContent || "—";
+    const saldo = document.getElementById('outSaldoFinale')?.textContent || "—";
+    const risp = document.getElementById('outRisparmio')?.textContent || "—";
+    const esito = document.getElementById('outEsito')?.textContent || "—";
+    return {u, buyer, scenario, rata, saldo, risp, esito};
+  }
+
+  function isSustainable(){
+    // usa esito calcolato: "OK" o "ATTENZIONE"
+    const es = (document.getElementById('outEsito')?.textContent || "").toLowerCase();
+    if (!es) return null; // dati insufficienti
+    if (es.includes("ok")) return true;
+    if (es.includes("attenzione")) return false;
+    return null;
+  }
+
+  function updateTopActionStatus(){
+    const st = document.getElementById('topActionStatus');
+    const btn = document.getElementById('btnTopVisita');
+    if (!st || !btn) return;
+
+    // Legge il rapporto rata/reddito già calcolato (es. "32%")
+    const ratioTxt = (document.getElementById('outRapporto')?.textContent || "").trim();
+    const mm = ratioTxt.match(/(\d+(?:[.,]\d+)?)\s*%/);
+    const ratio = mm ? (parseFloat(mm[1].replace(",", ".")) / 100) : null;
+
+    // Livelli: OK <=30%, Borderline 30–39%, KO >39%
+    let level = "na";
+    if (ratio !== null && !isNaN(ratio)){
+      if (ratio <= 0.30) level = "ok";
+      else if (ratio <= 0.39) level = "mid";
+      else level = "bad";
+    }
+
+    st.classList.remove('status-banner','status-ok','status-mid','status-bad','status-na');
+    st.classList.add('status-banner');
+
+    if (level === "ok"){
+      st.classList.add('status-ok');
+      st.textContent = "Simulazione sostenibile: puoi richiedere la visita ✅";
+      btn.textContent = "🏠 Richiedi visita";
+    } else if (level === "mid"){
+      st.classList.add('status-mid');
+      st.textContent = "Simulazione borderline (30–39% del reddito): consigliato un confronto rapido prima della visita.";
+      btn.textContent = "💬 Confronto prima della visita";
+    } else if (level === "bad"){
+      st.classList.add('status-bad');
+      st.textContent = "Prima della visita consigliato un confronto rapido (simulazione oltre il 39% del reddito).";
+      btn.textContent = "💬 Confronto prima della visita";
+    } else {
+      st.classList.add('status-na');
+      st.textContent = "Completa la simulazione (reddito/dati) per una valutazione di sostenibilità.";
+      btn.textContent = "💬 Contatto rapido";
+    }
+  }
+
+  function wireTopButtons(){
+    const wa = document.getElementById('btnTopWaBiz');
+    if (wa) wa.addEventListener('click', () => {
+      const p = buildContactPayload();
+      const subject = `Progetto Casa – Contatto – ${p.u}`;
+      const body = [
+        "PROGETTO CASA – contatto (vendita diretta)",
+        `Immobile: ${p.u}`,
+        `Profilo: ${p.buyer === "investimento" ? "Investimento" : "Abitarci"}`,
+        `Scenario: ${p.scenario}`,
+        `Rata stimata: ${p.rata}`,
+        `Saldo finale: ${p.saldo}`,
+        `Risparmio vs mercato: ${p.risp}`,
+        `Esito sostenibilità: ${p.esito}`
+      ].join("\n");
+      openWhatsApp(body);
+    });
+
+    const em = document.getElementById('btnTopEmail');
+    if (em) em.addEventListener('click', () => {
+      const p = buildContactPayload();
+      const subject = `Progetto Casa – Contatto – ${p.u}`;
+      const body = [
+        "PROGETTO CASA – contatto (vendita diretta)",
+        `Immobile: ${p.u}`,
+        `Profilo: ${p.buyer === "investimento" ? "Investimento" : "Abitarci"}`,
+        `Scenario: ${p.scenario}`,
+        `Rata stimata: ${p.rata}`,
+        `Saldo finale: ${p.saldo}`,
+        `Risparmio vs mercato: ${p.risp}`,
+        `Esito sostenibilità: ${p.esito}`
+      ].join("\n");
+      openEmail(subject, body);
+    });
+
+    const btnW = document.getElementById('btnTopShareWhats');
+    if (btnW) btnW.addEventListener('click', () => {
+      const url = buildShareUrl();
+      const s = getState();
+      const e = getEssentials();
+      const buyerLabel = (s.buyer === "investimento") ? "Investimento" : "Abitarci";
+      const lines = [
+        "PROGETTO CASA (vendita diretta)",
+        `Immobile: ${s.id}`,
+        `Profilo: ${buyerLabel}`,
+        `Scenario: ${scenarioLabel(s.scenario)}`,
+        "",
+        `Valore di mercato: ${e.valoreMercato}`,
+        `Prezzo da simulazione: ${e.prezzo}`,
+        `Risparmio vs mercato: ${e.risparmio}`,
+        `Mutuo fino al 100%: ${e.mutuo100}`
+      ];
+      if (s.buyer === "investimento") {
+        lines.push("");
+        lines.push(`Rendita stimata: ${e.canone}`);
+        lines.push(`Anticipo per rendita=mutuo: ${e.anticipoRendita}`);
+      } else {
+        lines.push("");
+        lines.push(`Saldo finale: ${e.saldo}`);
+        lines.push(`Rata stimata: ${e.rata}`);
+        lines.push(`Esito sostenibilità: ${e.esito}`);
+        lines.push(`Anticipo per rientrare nel 30%: ${e.anticipoReddito}`);
+      }
+      if (s.invite) lines.push(`Codice invito: ${s.invite}`);
+      lines.push("");
+      lines.push(`Apri la simulazione: ${url}`);
+      openWhatsApp(lines.join("\n"));
+      const st = document.getElementById('topShareStatus');
+      if (st) st.textContent = "WhatsApp aperto ✅";
+    });
+
+    const btnM = document.getElementById('btnTopShareMail');
+    if (btnM) btnM.addEventListener('click', () => {
+      const url = buildShareUrl();
+      const s = getState();
+      const e = getEssentials();
+      const buyerLabel = (s.buyer === "investimento") ? "Investimento" : "Abitarci";
+      const subject = `Progetto Casa – ${buyerLabel} – ${s.id}`;
+      const lines = [
+        `Progetto Casa (vendita diretta) – ${buyerLabel} – ${s.id}`,
+        `Scenario: ${scenarioLabel(s.scenario)}`,
+        `Valore di mercato: ${e.valoreMercato}`,
+        `Prezzo da simulazione: ${e.prezzo}`,
+        `Risparmio vs mercato: ${e.risparmio}`,
+        `Mutuo fino al 100%: ${e.mutuo100}`
+      ];
+      if (s.buyer === "investimento"){
+        lines.push(`Rendita stimata: ${e.canone}`);
+        lines.push(`Anticipo per rendita=mutuo: ${e.anticipoRendita}`);
+      } else {
+        lines.push(`Saldo finale: ${e.saldo}`);
+        lines.push(`Rata stimata: ${e.rata}`);
+        lines.push(`Esito: ${e.esito}`);
+        lines.push(`Anticipo per rientrare nel 30%: ${e.anticipoReddito}`);
+      }
+      if (s.invite) lines.push(`Codice invito: ${s.invite}`);
+      lines.push("");
+      lines.push(`Apri la simulazione: ${url}`);
+      openEmail(subject, lines.join("\n"));
+      const st = document.getElementById('topShareStatus');
+      if (st) st.textContent = "Email pronta ✅";
+    });
+
+    const btnC = document.getElementById('btnTopCopiaLink');
+    if (btnC) btnC.addEventListener('click', async () => {
+      const url = buildShareUrl();
+      const st = document.getElementById('topShareStatus');
+      try{
+        await navigator.clipboard.writeText(url);
+        if (st) st.textContent = "Link copiato ✅";
+      }catch(e){
+        // fallback robusto (file:// spesso blocca clipboard)
+        window.prompt("Copia questo link:", url);
+        if (st) st.textContent = "Link pronto da copiare ✅";
+      }
+    });
+
+    const v = document.getElementById('btnTopVisita');
+    if (v) v.addEventListener('click', () => {
+      const p = buildContactPayload();
+      const s = isSustainable();
+      const title = (s === true) ? "RICHIESTA VISITA" : (s === false ? "CONFRONTO PRIMA DELLA VISITA" : "CONTATTO RAPIDO");
+      const msg = [
+        `PROGETTO CASA – ${title}`,
+        `Immobile: ${p.u}`,
+        `Profilo: ${p.buyer === "investimento" ? "Investimento" : "Abitarci"}`,
+        `Scenario: ${p.scenario}`,
+        `Rata stimata: ${p.rata}`,
+        `Saldo finale: ${p.saldo}`,
+        `Risparmio vs mercato: ${p.risp}`,
+        `Esito sostenibilità: ${p.esito}`,
+        "",
+        "Se vuoi, per dare priorità alla visita puoi inviare un documento che attesti il reddito (puoi oscurare dati sensibili)."
+      ].join("\n");
+      openWhatsApp(msg);
+    });
+  }
+
+
+    // Patch: aggiornaSimulazione deve sempre aggiornare lo stato azioni rapide
+const __aggiornaSimulazione = aggiornaSimulazione;
+aggiornaSimulazione = function () {
+  __aggiornaSimulazione();
+  updateTopActionStatus();
+};
+
+let __simRAF = 0;
+function scheduleSimUpdate() {
+  if (__simRAF) cancelAnimationFrame(__simRAF);
+  __simRAF = requestAnimationFrame(() => {
+    __simRAF = 0;
+    aggiornaSimulazione();
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   popolaSelect();
+  applyStateFromUrl();
+
+  aggiornaHelp();
+  toggleScenarioFields();
+  toggleMeseFields();
   aggiornaInfoUnita();
   aggiornaSimulazione();
 
+  wireTopButtons();
+  updateTopActionStatus();
+
   unitaSelect.addEventListener('change', () => {
     aggiornaInfoUnita();
-    aggiornaSimulazione();
+    scheduleSimUpdate();
   });
 
-  [scenarioSel, meseInput, caparraPercInput, cap1Input, cap2Input, cap3Input, redditoInput]
-    .forEach(el => el.addEventListener('input', aggiornaSimulazione));
+  [scenarioSel, meseInput, caparraPercInput, cap1Input, cap2Input, cap3Input, redditoInput, anniMutuoInput, tassoMutuoInput]
+    .forEach(el => el.addEventListener('input', scheduleSimUpdate));
+
+  buyerTypeEls.forEach(el => el.addEventListener('change', () => {
+    aggiornaHelp();
+    scheduleSimUpdate();
+  }));
+
+  scenarioSel.addEventListener('change', () => {
+    toggleScenarioFields();
+    toggleMeseFields();
+    scheduleSimUpdate();
+  });
 });
+
 </script>
 </body>
 </html>
